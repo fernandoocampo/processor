@@ -1,6 +1,7 @@
 package application_test
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -17,7 +18,8 @@ func TestProcessFile(t *testing.T) {
 		&domain.Employee{"158123123A", "Vladimir Lucilo", "Garcia Caicedo", "12/11/1966", "it"},
 	}
 
-	got, err := application.Process(filepath)
+	ctx := context.TODO()
+	got, err := application.Process(ctx, filepath)
 
 	assert.NoError(t, err)
 
@@ -27,7 +29,8 @@ func TestProcessFile(t *testing.T) {
 func TestProcessFileWithOneInvalidRecord(t *testing.T) {
 	filepath := buildFileTestPath(t, "oneinvalidrecord.csv")
 
-	got, err := application.Process(filepath)
+	ctx := context.TODO()
+	got, err := application.Process(ctx, filepath)
 
 	assert.Nil(t, got)
 	assert.Error(t, err)
@@ -35,14 +38,25 @@ func TestProcessFileWithOneInvalidRecord(t *testing.T) {
 
 func TestProcessNonexistingFile(t *testing.T) {
 	filepath := buildFileTestPath(t, "nonexisting.csv")
-	got, err := application.Process(filepath)
+	ctx := context.TODO()
+	got, err := application.Process(ctx, filepath)
 	assert.Nil(t, got)
 	assert.Error(t, err)
+}
+
+func BenchmarkProcessBigFile(b *testing.B) {
+	ctx := context.TODO()
+	filepath := buildFilePath("bulk.csv")
+	application.Process(ctx, filepath) //0.139s
 }
 
 // buildFileTestPath helps to build the file path of the given file name.
 func buildFileTestPath(t *testing.T, name string) string {
 	t.Helper()
+	return buildFilePath(name)
+}
+
+func buildFilePath(name string) string {
 	dir, _ := os.Getwd()
 	return filepath.Join(dir+"/testdata", name)
 }
