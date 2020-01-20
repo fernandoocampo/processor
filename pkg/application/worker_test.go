@@ -1,6 +1,7 @@
 package application_test
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -17,7 +18,8 @@ func TestProcessFile(t *testing.T) {
 		&domain.Employee{"158123123A", "Vladimir Lucilo", "Garcia Caicedo", "12/11/1966", "it"},
 	}
 
-	got, err := application.Process(filepath)
+	ctx := context.TODO()
+	got, err := application.Process(ctx, filepath)
 
 	assert.NoError(t, err)
 
@@ -27,7 +29,8 @@ func TestProcessFile(t *testing.T) {
 func TestProcessFileWithOneInvalidRecord(t *testing.T) {
 	filepath := buildFileTestPath(t, "oneinvalidrecord.csv")
 
-	got, err := application.Process(filepath)
+	ctx := context.TODO()
+	got, err := application.Process(ctx, filepath)
 
 	assert.Nil(t, got)
 	assert.Error(t, err)
@@ -35,7 +38,8 @@ func TestProcessFileWithOneInvalidRecord(t *testing.T) {
 
 func TestProcessNonexistingFile(t *testing.T) {
 	filepath := buildFileTestPath(t, "nonexisting.csv")
-	got, err := application.Process(filepath)
+	ctx := context.TODO()
+	got, err := application.Process(ctx, filepath)
 	assert.Nil(t, got)
 	assert.Error(t, err)
 }
