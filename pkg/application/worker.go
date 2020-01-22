@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -29,26 +30,35 @@ type result struct {
 // an slice of employees. If something goes wrong while iterating
 // the file an error will be returned.
 func Process(ctx context.Context, filepath string) ([]*domain.Employee, error) {
-	var result []*domain.Employee
+	var finalResult []*domain.Employee
 
 	done := make(chan interface{})
 	defer close(done)
 
-	for v := range processRecord(done, getRecords(done, filepath)) {
+	recordsStream := getRecords(done, filepath)
+
+	numProcessors := runtime.NumCPU()
+	fmt.Printf("Spinning up %d record processors.\n", numProcessors)
+	processors := make([]<-chan *result, numProcessors)
+	for i := 0; i < numProcessors; i++ {
+		processors[i] = processRecord(done, recordsStream)
+	}
+
+	for v := range fanIn(done, processors...) {
 		if v.anerror != nil {
 			log.Printf("error: %s", v.anerror.Error())
 			return nil, v.anerror
 		}
-		result = append(result, v.employee)
+		finalResult = append(finalResult, v.employee)
 	}
-	return result, nil
+	return finalResult, nil
 }
 
-func fanIn(done <-chan interface{}, channels ...<-chan interface{}) <-chan interface{} {
+func fanIn(done <-chan interface{}, channels ...<-chan *result) <-chan *result {
 	var wg sync.WaitGroup
-	multiplexedStream := make(chan interface{})
+	multiplexedStream := make(chan *result)
 
-	multiplex := func(c <-chan interface{}) {
+	multiplex := func(c <-chan *result) {
 		defer wg.Done()
 		for i := range c {
 			select {

@@ -44,6 +44,11 @@ func TestProcessNonexistingFile(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func BenchmarkProcessBigFile(b *testing.B) {
+	ctx := context.TODO()
+	application.Process(ctx, "testdata/bulk.csv") //0.118s
+}
+
 // buildFileTestPath helps to build the file path of the given file name.
 func buildFileTestPath(t *testing.T, name string) string {
 	t.Helper()
